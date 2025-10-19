@@ -1,335 +1,176 @@
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
-local RunService = game:GetService("RunService")
+--[[
+ Fly GUI V9 - Recolor & Credit Patch (By Nico)
+ Intenta aplicar colores rojo elegante + negro y cambiar "By KIRO" -> "By Nico".
+ Preserva la funcionalidad original del fly (no modifica la lógica de vuelo).
+]]
 
--- Crear el ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "CoolkidGui"
-screenGui.Parent = Player.PlayerGui
-screenGui.ResetOnSpawn = false
-
--- Crear el Frame principal (arrastrable)
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 200)
-frame.Position = UDim2.new(0.5, -150, 0.5, -100)
-frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-frame.BackgroundTransparency = 0
-frame.BorderSizePixel = 2
-frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
-frame.Parent = screenGui
-
--- Estilo C00LKID: Añadir efecto de brillo (UIStroke)
-local uiStroke = Instance.new("UIStroke")
-uiStroke.Thickness = 2
-uiStroke.Color = Color3.fromRGB(255, 0, 0)
-uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-uiStroke.Parent = frame
-
--- Título del GUI
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 50)
-title.Position = UDim2.new(0, 0, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "Martinetti's Scripts :)"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
-title.TextStrokeTransparency = 0
-title.Font = Enum.Font.Code
-title.TextSize = 24
-title.Parent = frame
-
--- Texto "Tiktok: m4rt1n3tt1"
-local tiktokText = Instance.new("TextLabel")
-tiktokText.Size = UDim2.new(0, 100, 0, 20)
-tiktokText.Position = UDim2.new(0.85, -100, 0.9, 0)
-tiktokText.BackgroundTransparency = 1
-tiktokText.Text = "Tiktok: m4rt1n3tt1"
-tiktokText.TextColor3 = Color3.fromRGB(255, 255, 255)
-tiktokText.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
-tiktokText.TextStrokeTransparency = 0
-tiktokText.Font = Enum.Font.Code
-tiktokText.TextSize = 12
-tiktokText.Parent = frame
-
--- Campo de entrada de texto
-local textBox = Instance.new("TextBox")
-textBox.Size = UDim2.new(0.8, 0, 0, 30)
-textBox.Position = UDim2.new(0.1, 0, 0.3, 0)
-textBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-textBox.PlaceholderText = "Enter h4ck code..."
-textBox.PlaceholderColor3 = Color3.fromRGB(255, 0, 0)
-textBox.Font = Enum.Font.Code
-textBox.TextSize = 18
-textBox.Parent = frame
-
--- Estilo neón para el TextBox
-local textBoxStroke = Instance.new("UIStroke")
-textBoxStroke.Thickness = 1
-textBoxStroke.Color = Color3.fromRGB(255, 0, 0)
-textBoxStroke.Parent = textBox
-
--- Botón de minimizar
-local minimizeButton = Instance.new("TextButton")
-minimizeButton.Size = UDim2.new(0, 20, 0, 20)
-minimizeButton.Position = UDim2.new(0.95, -20, 0, 0)
-minimizeButton.BackgroundTransparency = 1
-minimizeButton.Text = "_"
-minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-minimizeButton.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
-minimizeButton.TextStrokeTransparency = 0
-minimizeButton.Font = Enum.Font.Code
-minimizeButton.TextSize = 16
-minimizeButton.Parent = frame
-
-local isMinimized = false
-minimizeButton.MouseButton1Click:Connect(function()
-    isMinimized = not isMinimized
-    textBox.Visible = not isMinimized
-    tiktokText.Visible = not isMinimized
-    frame.Size = isMinimized and UDim2.new(0, 300, 0, 50) or UDim2.new(0, 300, 0, 200)
+-- 1) Cargar el script original (igual que antes)
+pcall(function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/QnBuB3iq"))()
 end)
 
--- Variables de estado
-local hackEnabled = false
-local pinkMode = false
-local espEnabled = false
-local espFolder = Instance.new("Folder")
-espFolder.Name = "ESP"
-espFolder.Parent = game.CoreGui
-local originalWalkSpeed = Player.Character and Player.Character.Humanoid.WalkSpeed or 16
-local originalJumpPower = Player.Character and Player.Character.Humanoid.JumpPower or 50
-local infiniteJumpConnection = nil
+-- 2) Parámetros de estilo
+local ROJO = Color3.fromRGB(170, 0, 0)
+local NEGRO = Color3.fromRGB(0, 0, 0)
+local BLANCO = Color3.fromRGB(255, 255, 255)
 
--- Función para activar/desactivar saltos infinitos
-local function toggleInfiniteJump(enabled)
-    if infiniteJumpConnection then
-        infiniteJumpConnection:Disconnect()
-        infiniteJumpConnection = nil
-    end
-    if enabled and Player.Character then
-        infiniteJumpConnection = UserInputService.JumpRequest:Connect(function()
-            if Player.Character and Player.Character.Humanoid then
-                Player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local StarterGui = game:GetService("StarterGui")
+local MAX_WAIT = 10 -- segundos máximo para esperar a que aparezca la GUI
+
+-- Función que aplica estilos a un GUI (cambia colores y texto)
+local function aplicarEstilo(gui)
+    if not gui or not gui.Parent then return end
+
+    -- Recolor general
+    for _, obj in ipairs(gui:GetDescendants()) do
+        if obj:IsA("Frame") or obj:IsA("ScrollingFrame") or obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+            -- Mantener imágenes si existen; para frames forzamos fondo negro si es Colorable
+            pcall(function() obj.BackgroundColor3 = NEGRO end)
+            pcall(function() obj.BorderColor3 = ROJO end)
+        elseif obj:IsA("TextButton") then
+            pcall(function() obj.BackgroundColor3 = ROJO end)
+            pcall(function() obj.TextColor3 = BLANCO end)
+            pcall(function() obj.BorderColor3 = NEGRO end)
+        elseif obj:IsA("TextLabel") then
+            -- Si el label contiene "fly gui" lo usamos como título
+            local ok, txt = pcall(function() return obj.Text end)
+            if ok and type(txt) == "string" and string.find(string.lower(txt), "fly gui") then
+                pcall(function() obj.Text = "Fly GUI V9 – By Nico" end)
+            else
+                -- Si el label parece ser el crédito (contiene KIRO) lo cambiamos
+                if ok and string.find(string.lower(txt or ""), "kiro") then
+                    pcall(function() obj.Text = string.gsub(txt, "[Kk][Ii][Rr][Oo]", "Nico") end)
+                end
             end
-        end)
+            pcall(function() obj.TextColor3 = ROJO end)
+            pcall(function() obj.BackgroundColor3 = NEGRO end)
+            pcall(function() obj.BorderColor3 = ROJO end)
+        end
+    end
+
+    -- Cambiar cualquier TextLabel/ TextButton suelto que diga "By KIRO" exactamente
+    for _, obj in ipairs(gui:GetDescendants()) do
+        if (obj:IsA("TextLabel") or obj:IsA("TextButton")) then
+            pcall(function()
+                if obj.Text and string.find(string.lower(obj.Text), "kiro") then
+                    obj.Text = string.gsub(obj.Text, "[Kk][Ii][Rr][Oo]", "Nico")
+                end
+            end)
+        end
     end
 end
 
--- Función para activar/desactivar ESP
-local function toggleESP(enabled)
-    espEnabled = enabled
-    for _, child in pairs(espFolder:GetChildren()) do
-        child:Destroy()
+-- Busca una ScreenGui que parezca la del fly
+local function esPosibleFlyGui(g)
+    if not g or not g:IsA("ScreenGui") then return false end
+    for _, d in ipairs(g:GetDescendants()) do
+        if d:IsA("TextButton") or d:IsA("TextLabel") then
+            local ok, txt = pcall(function() return d.Text end)
+            if ok and type(txt) == "string" then
+                local ltxt = string.lower(txt)
+                if string.find(ltxt, "fly") or string.find(ltxt, "fly gui") or string.find(ltxt, "by kiro") or string.find(ltxt, "flygui") then
+                    return true
+                end
+                -- botones comunes: "FLY", "UP", "DOWN", "+"
+                if ltxt == "fly" or ltxt == "up" or ltxt == "down" or ltxt == "+" or ltxt == "-" then
+                    return true
+                end
+            end
+        end
     end
-    if enabled then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= Player and player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChild("HumanoidRootPart") then
-                local highlight = Instance.new("Highlight")
-                highlight.Parent = espFolder
-                highlight.Adornee = player.Character
-                highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-                highlight.FillTransparency = 0.5
-                highlight.OutlineTransparency = 0
+    return false
+end
 
-                local billboardGui = Instance.new("BillboardGui")
-                billboardGui.Parent = espFolder
-                billboardGui.Adornee = player.Character.Head
-                billboardGui.Size = UDim2.new(0, 200, 0, 50)
-                billboardGui.StudsOffset = Vector3.new(0, 2, 0)
-                billboardGui.AlwaysOnTop = true
+-- Intenta encontrar y aplicar estilo a cualquier GUI dentro de PlayerGui o CoreGui
+local function buscarYAplicar()
+    local found = false
+    local t0 = tick()
+    while tick() - t0 < MAX_WAIT do
+        -- Comprobar PlayerGui
+        if LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then
+            for _, gui in ipairs(LocalPlayer.PlayerGui:GetChildren()) do
+                if esPosibleFlyGui(gui) then
+                    pcall(aplicarEstilo, gui)
+                    -- Suscribir para futuros descendants añadidos (por si el script los recrea)
+                    pcall(function()
+                        gui.DescendantAdded:Connect(function()
+                            pcall(function() aplicarEstilo(gui) end)
+                        end)
+                    end)
+                    found = true
+                end
+            end
+        end
 
-                local nameLabel = Instance.new("TextLabel")
-                nameLabel.Parent = billboardGui
-                nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-                nameLabel.BackgroundTransparency = 1
-                nameLabel.Text = player.Name
-                nameLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-                nameLabel.TextStrokeTransparency = 0
-                nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-                nameLabel.Font = Enum.Font.Code
-                nameLabel.TextSize = 18
+        -- Comprobar CoreGui (algunos scripts insertan ahí)
+        local coreGuiChildren = game:GetService("CoreGui"):GetChildren()
+        for _, gui in ipairs(coreGuiChildren) do
+            if esPosibleFlyGui(gui) then
+                pcall(aplicarEstilo, gui)
+                pcall(function()
+                    gui.DescendantAdded:Connect(function()
+                        pcall(function() aplicarEstilo(gui) end)
+                    end)
+                end)
+                found = true
+            end
+        end
 
-                local distanceLabel = Instance.new("TextLabel")
-                distanceLabel.Parent = billboardGui
-                distanceLabel.Size = UDim2.new(1, 0, 0.5, 0)
-                distanceLabel.Position = UDim2.new(0, 0, 0.5, 0)
-                distanceLabel.BackgroundTransparency = 1
-                distanceLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-                distanceLabel.TextStrokeTransparency = 0
-                distanceLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-                distanceLabel.Font = Enum.Font.Code
-                distanceLabel.TextSize = 14
+        if found then break end
+        task.wait(0.6)
+    end
 
-                local connection
-                connection = RunService.Heartbeat:Connect(function()
-                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
-                        local distance = math.floor((player.Character.HumanoidRootPart.Position - Player.Character.HumanoidRootPart.Position).Magnitude)
-                        distanceLabel.Text = distance .. " studs"
-                    else
-                        connection:Disconnect()
-                    end
+    -- Intentar enviar notificación (si SetCore está disponible)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "Fly GUI V9";
+            Text = "By Nico";
+            Duration = 5;
+        })
+    end)
+
+    return found
+end
+
+-- Ejecutar búsqueda inicialmente
+local ok = buscarYAplicar()
+
+-- Si no encontró nada, suscribirse a nuevos ScreenGuis (por si se crean después)
+if not ok then
+    -- Observa PlayerGui creación
+    if LocalPlayer then
+        local pg = LocalPlayer:WaitForChild("PlayerGui")
+        pg.ChildAdded:Connect(function(child)
+            task.delay(0.25, function()
+                if esPosibleFlyGui(child) then
+                    pcall(aplicarEstilo, child)
+                    pcall(function()
+                        child.DescendantAdded:Connect(function()
+                            pcall(function() aplicarEstilo(child) end)
+                        end)
+                    end)
+                end
+            end)
+        end)
+    end
+
+    -- Observa CoreGui creación
+    local cg = game:GetService("CoreGui")
+    cg.ChildAdded:Connect(function(child)
+        task.delay(0.25, function()
+            if esPosibleFlyGui(child) then
+                pcall(aplicarEstilo, child)
+                pcall(function()
+                    child.DescendantAdded:Connect(function()
+                        pcall(function() aplicarEstilo(child) end)
+                    end)
                 end)
             end
-        end
-    end
+        end)
+    end)
 end
 
--- Función para cambiar al modo rosa
-local function setPinkMode(enabled)
-    pinkMode = enabled
-    local pinkColor = Color3.fromRGB(255, 105, 180)
-    if enabled then
-        frame.BackgroundColor3 = pinkColor
-        frame.BorderColor3 = pinkColor
-        uiStroke.Color = pinkColor
-        title.Text = "Te amo Anabella :3"
-        title.TextColor3 = pinkColor
-        title.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
-        tiktokText.TextColor3 = pinkColor
-        tiktokText.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
-        textBox.BackgroundColor3 = pinkColor
-        textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-        textBox.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
-        textBoxStroke.Color = pinkColor
-        minimizeButton.TextColor3 = pinkColor
-        minimizeButton.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
-    else
-        frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
-        uiStroke.Color = Color3.fromRGB(255, 0, 0)
-        title.Text = "Martinetti's Scripts :)"
-        title.TextColor3 = Color3.fromRGB(255, 255, 255)
-        title.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
-        tiktokText.TextColor3 = Color3.fromRGB(255, 255, 255)
-        tiktokText.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
-        textBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-        textBox.PlaceholderColor3 = Color3.fromRGB(255, 0, 0)
-        textBoxStroke.Color = Color3.fromRGB(255, 0, 0)
-        minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        minimizeButton.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
-    end
-end
-
--- Lógica para el campo de texto
-textBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        local input = textBox.Text:lower()
-        if input == "esp" then
-            toggleESP(true)
-            textBox.Text = ""
-            StarterGui:SetCore("SendNotification", {
-                Title = "Esp highlight activado!",
-                Text = "Disfruta :)",
-                Duration = 3
-            })
-        elseif input == "unesp" and espEnabled then
-            toggleESP(false)
-            textBox.Text = ""
-            StarterGui:SetCore("SendNotification", {
-                Title = "Esp highlight desactivado",
-                Text = "Chau esp pipipi",
-                Duration = 3
-            })
-        elseif input == "speed 20 + infjump" and not hackEnabled then
-            hackEnabled = true
-            if Player.Character and Player.Character.Humanoid then
-                Player.Character.Humanoid.WalkSpeed = 20
-                Player.Character.Humanoid.JumpPower = 50
-                toggleInfiniteJump(true)
-            end
-            textBox.Text = ""
-            StarterGui:SetCore("SendNotification", {
-                Title = "H4CK activado :)",
-                Text = "20 speed + infjump",
-                Duration = 3
-            })
-        elseif input == "desactivar hack" and hackEnabled then
-            hackEnabled = false
-            if Player.Character and Player.Character.Humanoid then
-                Player.Character.Humanoid.WalkSpeed = originalWalkSpeed
-                Player.Character.Humanoid.JumpPower = originalJumpPower
-                toggleInfiniteJump(false)
-                setPinkMode(false)
-            end
-            textBox.Text = ""
-            StarterGui:SetCore("SendNotification", {
-                Title = "H4CK DEACTIVATED",
-                Text = "Hack desactivated :( 16 speed + no infjump",
-                Duration = 3
-            })
-        elseif input == "gui kawai" then
-            setPinkMode(true)
-            textBox.Text = ""
-            StarterGui:SetCore("SendNotification", {
-                Title = "Te sientes muy onichan?",
-                Text = "GUI en rosa activado xd",
-                Duration = 3
-            })
-        elseif input == "gui normal" then
-            setPinkMode(false)
-            textBox.Text = ""
-            StarterGui:SetCore("SendNotification", {
-                Title = "GUI normal activada",
-                Text = "Pongase serio siervo",
-                Duration = 3
-            })
-        else
-            textBox.Text = ""
-            StarterGui:SetCore("SendNotification", {
-                Title = "ERROR",
-                Text = "Invalid h4ck code!",
-                Duration = 3
-            })
-        end
-    end
-end)
-
--- Manejar nuevos jugadores para ESP
-Players.PlayerAdded:Connect(function(player)
-    if espEnabled then
-        player.CharacterAdded:Connect(function()
-            wait(1)
-            toggleESP(false)
-            toggleESP(true)
-        end)
-    end
-end)
-
--- Lógica para arrastrar el GUI
-local dragging, dragInput, dragStart, startPos
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
--- Guardar la velocidad original del jugador
-Player.CharacterAdded:Connect(function(character)
-    originalWalkSpeed = character.Humanoid.WalkSpeed
-    originalJumpPower = character.Humanoid.JumpPower
-end)
+-- Mensaje final en consola para debug
+print("[Fly GUI Patch] Intento de recolor: terminado. Encontrado inicialmente:", ok)
