@@ -12,8 +12,8 @@ screenGui.ResetOnSpawn = false
 
 -- Crear el Frame principal (arrastrable)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 250) -- Alto para acomodar botones
-frame.Position = UDim2.new(0.5, -150, 0.5, -125)
+frame.Size = UDim2.new(0, 300, 0, 200)
+frame.Position = UDim2.new(0.5, -150, 0.5, -100)
 frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BackgroundTransparency = 0
 frame.BorderSizePixel = 2
@@ -53,10 +53,10 @@ tiktokText.Font = Enum.Font.Code
 tiktokText.TextSize = 12
 tiktokText.Parent = frame
 
--- Campo de entrada de texto (opcional)
+-- Campo de entrada de texto
 local textBox = Instance.new("TextBox")
 textBox.Size = UDim2.new(0.8, 0, 0, 30)
-textBox.Position = UDim2.new(0.1, 0, 0.2, 0)
+textBox.Position = UDim2.new(0.1, 0, 0.3, 0)
 textBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 textBox.PlaceholderText = "Enter h4ck code..."
@@ -89,10 +89,7 @@ minimizeButton.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
     textBox.Visible = not isMinimized
     tiktokText.Visible = not isMinimized
-    espButton.Visible = not isMinimized
-    kawaiButton.Visible = not isMinimized
-    speedButton.Visible = not isMinimized
-    frame.Size = isMinimized and UDim2.new(0, 300, 0, 50) or UDim2.new(0, 300, 0, 250)
+    frame.Size = isMinimized and UDim2.new(0, 300, 0, 50) or UDim2.new(0, 300, 0, 200)
 end)
 
 -- Variables de estado
@@ -218,81 +215,88 @@ local function setPinkMode(enabled)
     end
 end
 
--- Botón ESP
-local espButton = Instance.new("TextButton")
-espButton.Size = UDim2.new(0, 60, 0, 30)
-espButton.Position = UDim2.new(0.1, 0, 0.4, 0)
-espButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-espButton.Text = "ESP"
-espButton.TextColor3 = Color3.fromRGB(255, 0, 0)
-espButton.TextStrokeTransparency = 0
-espButton.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
-espButton.Font = Enum.Font.Code
-espButton.TextSize = 14
-espButton.Parent = frame
-espButton.MouseButton1Click:Connect(function()
-    toggleESP(not espEnabled)
-    StarterGui:SetCore("SendNotification", {
-        Title = espEnabled and "Esp highlight desactivado" or "Esp highlight activado!",
-        Text = espEnabled and "Chau esp pipipi" or "Disfruta :)",
-        Duration = 3
-    })
+-- Lógica para el campo de texto
+textBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local input = textBox.Text:lower()
+        if input == "esp" then
+            toggleESP(true)
+            textBox.Text = ""
+            StarterGui:SetCore("SendNotification", {
+                Title = "Esp highlight activado!",
+                Text = "Disfruta :)",
+                Duration = 3
+            })
+        elseif input == "unesp" and espEnabled then
+            toggleESP(false)
+            textBox.Text = ""
+            StarterGui:SetCore("SendNotification", {
+                Title = "Esp highlight desactivado",
+                Text = "Chau esp pipipi",
+                Duration = 3
+            })
+        elseif input == "speed 20 + infjump" and not hackEnabled then
+            hackEnabled = true
+            if Player.Character and Player.Character.Humanoid then
+                Player.Character.Humanoid.WalkSpeed = 20
+                Player.Character.Humanoid.JumpPower = 50
+                toggleInfiniteJump(true)
+            end
+            textBox.Text = ""
+            StarterGui:SetCore("SendNotification", {
+                Title = "H4CK activado :)",
+                Text = "20 speed + infjump",
+                Duration = 3
+            })
+        elseif input == "desactivar hack" and hackEnabled then
+            hackEnabled = false
+            if Player.Character and Player.Character.Humanoid then
+                Player.Character.Humanoid.WalkSpeed = originalWalkSpeed
+                Player.Character.Humanoid.JumpPower = originalJumpPower
+                toggleInfiniteJump(false)
+                setPinkMode(false)
+            end
+            textBox.Text = ""
+            StarterGui:SetCore("SendNotification", {
+                Title = "H4CK DEACTIVATED",
+                Text = "Hack desactivated :( 16 speed + no infjump",
+                Duration = 3
+            })
+        elseif input == "gui kawai" then
+            setPinkMode(true)
+            textBox.Text = ""
+            StarterGui:SetCore("SendNotification", {
+                Title = "Te sientes muy onichan?",
+                Text = "GUI en rosa activado xd",
+                Duration = 3
+            })
+        elseif input == "gui normal" then
+            setPinkMode(false)
+            textBox.Text = ""
+            StarterGui:SetCore("SendNotification", {
+                Title = "GUI normal activada",
+                Text = "Pongase serio siervo",
+                Duration = 3
+            })
+        else
+            textBox.Text = ""
+            StarterGui:SetCore("SendNotification", {
+                Title = "ERROR",
+                Text = "Invalid h4ck code!",
+                Duration = 3
+            })
+        end
+    end
 end)
 
--- Botón GUI Kawai
-local kawaiButton = Instance.new("TextButton")
-kawaiButton.Size = UDim2.new(0, 80, 0, 30)
-kawaiButton.Position = UDim2.new(0.3, 0, 0.4, 0)
-kawaiButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-kawaiButton.Text = "GUI Kawai"
-kawaiButton.TextColor3 = Color3.fromRGB(255, 0, 0)
-kawaiButton.TextStrokeTransparency = 0
-kawaiButton.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
-kawaiButton.Font = Enum.Font.Code
-kawaiButton.TextSize = 14
-kawaiButton.Parent = frame
-kawaiButton.MouseButton1Click:Connect(function()
-    setPinkMode(not pinkMode)
-    StarterGui:SetCore("SendNotification", {
-        Title = pinkMode and "GUI normal activada" or "Te sientes muy onichan?",
-        Text = pinkMode and "Pongase serio siervo" or "GUI en rosa activado xd",
-        Duration = 3
-    })
-end)
-
--- Botón Speed 20 + Inf
-local speedButton = Instance.new("TextButton")
-speedButton.Size = UDim2.new(0, 100, 0, 30)
-speedButton.Position = UDim2.new(0.55, 0, 0.4, 0)
-speedButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-speedButton.Text = "Speed 20 + Inf"
-speedButton.TextColor3 = Color3.fromRGB(255, 0, 0)
-speedButton.TextStrokeTransparency = 0
-speedButton.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
-speedButton.Font = Enum.Font.Code
-speedButton.TextSize = 12
-speedButton.Parent = frame
-speedButton.MouseButton1Click:Connect(function()
-    if not hackEnabled and Player.Character and Player.Character.Humanoid then
-        hackEnabled = true
-        Player.Character.Humanoid.WalkSpeed = 20
-        Player.Character.Humanoid.JumpPower = 50
-        toggleInfiniteJump(true)
-        StarterGui:SetCore("SendNotification", {
-            Title = "H4CK activado :)",
-            Text = "20 speed + infjump",
-            Duration = 3
-        })
-    elseif hackEnabled and Player.Character and Player.Character.Humanoid then
-        hackEnabled = false
-        Player.Character.Humanoid.WalkSpeed = originalWalkSpeed
-        Player.Character.Humanoid.JumpPower = originalJumpPower
-        toggleInfiniteJump(false)
-        StarterGui:SetCore("SendNotification", {
-            Title = "H4CK DEACTIVATED",
-            Text = "Hack desactivated :( 16 speed + no infjump",
-            Duration = 3
-        })
+-- Manejar nuevos jugadores para ESP
+Players.PlayerAdded:Connect(function(player)
+    if espEnabled then
+        player.CharacterAdded:Connect(function()
+            wait(1)
+            toggleESP(false)
+            toggleESP(true)
+        end)
     end
 end)
 
@@ -328,15 +332,4 @@ end)
 Player.CharacterAdded:Connect(function(character)
     originalWalkSpeed = character.Humanoid.WalkSpeed
     originalJumpPower = character.Humanoid.JumpPower
-end)
-
--- Manejar nuevos jugadores para ESP
-Players.PlayerAdded:Connect(function(player)
-    if espEnabled then
-        player.CharacterAdded:Connect(function()
-            wait(1)
-            toggleESP(false)
-            toggleESP(true)
-        end)
-    end
 end)
